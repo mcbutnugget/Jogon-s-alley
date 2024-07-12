@@ -69,7 +69,7 @@ let register = new REGISTER();
 player.images[0].src = "textures/entity/player.png";
 console.log(register.blocks);
 for(var y = 0; y<lvl1.length; y++){
-    for(var x = 0; x<lvl1.length; x++){
+    for(var x = 0; x<lvl1[y].length; x++){
 await register.blocks[register.blockIds[lvl1[y][x]]].place(x,y,ctx,camera);
     }
 }
