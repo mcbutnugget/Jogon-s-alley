@@ -41,8 +41,8 @@ class Block {
             await this.loadModel();
         }
 
-        const width = this.parentModel?.bl1?.width || 16;
-        const height = this.parentModel?.bl1?.height || 16;
+        const width = this.parentModel?.bl1?.width || 50;
+        const height = this.parentModel?.bl1?.height || 50;
 
         const realPosition = {
             x: x * 50,

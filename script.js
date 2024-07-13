@@ -1,4 +1,5 @@
 import REGISTER from './game/initializeBlocks.js';
+import createLevel from './game/level/createLevel.js';
 
 // Key handler setup
 function createKeyHandler() {
@@ -40,8 +41,10 @@ let player = {
     velX: 0,
     w: 50,
     h: 50,
-    x: 0,
-    y: 50,
+    x: -290,
+    y: -150,
+    mirrorX: 1,
+    mirrorY:1,
     colliding: false,
     images: [new Image()],
     frames: {
@@ -51,6 +54,15 @@ let player = {
         current: 0,
         fps: playerData.fps,
         timer: 0,
+    },
+    collisions:{
+        colliding:false,
+        direction:{
+            up:false,
+            down:false,
+            left:false,
+            right:false
+        }
     },
     init: function () {
         this.x += this.velX;
@@ -64,13 +76,45 @@ let player = {
         }
     },
     checkCollision: function() {
-        this.colliding = existingBlocks.some(block => {
-            return (
+        this.collisions.colliding = existingBlocks.some(block => {
+            return(
                 block[1] < (-player.y) + 50 && // Top of block above player's bottom
-                block[1] > (-player.y) &&       // Bottom of block below player's top
+                block[1]+50 > (-player.y) &&       // Bottom of block below player's top
                 block[0] < (-player.x) + 50 && // Left of block left of player's right
                 block[0] + 50 > (-player.x)     // Right of block right of player's left
-            );
+            )
+        });
+        this.collisions.direction.down = existingBlocks.some(block => {
+            return(
+                block[1] <= (-player.y) + 50 && // Top of block above player's bottom
+                block[1]+12.5  >= (-player.y) &&       // Bottom of block below player's top
+                block[0] <= (-player.x) + 49 && // Left of block left of player's right
+                block[0] + 49 >= (-player.x)     // Right of block right of player's left
+            )
+        });
+        this.collisions.direction.up = existingBlocks.some(block => {
+            return(
+                block[1] <= (-player.y) + 12.5 && // Top of block above player's bottom
+                block[1]+50 >= (-player.y) &&       // Bottom of block below player's top
+                block[0] <= (-player.x) + 49 && // Left of block left of player's right
+                block[0] + 49 >= (-player.x)     // Right of block right of player's left
+            )
+        });
+        this.collisions.direction.left = existingBlocks.some(block => {
+            return(
+                block[1] <= (-player.y) + 49 && // Top of block above player's bottom
+                block[1]+49 >= (-player.y) &&       // Bottom of block below player's top
+                block[0] <= (-player.x) + 50 && // Left of block left of player's right
+                block[0] + 12.5 >= (-player.x)     // Right of block right of player's left
+            )
+        });
+        this.collisions.direction.right = existingBlocks.some(block => {
+            return(
+                block[1] <= (-player.y) + 49 && // Top of block above player's bottom
+                block[1]+49 >= (-player.y) &&       // Bottom of block below player's top
+                block[0] <= (-player.x) + 12.5 && // Left of block left of player's right
+                block[0] + 50 >= (-player.x)     // Right of block right of player's left
+            )
         });
     }
 };
@@ -84,13 +128,7 @@ let camera = {
 };
 
 // Level data
-window.lvl1 = [
-    [0,0,0,0,0,0,0,0,0,0,2,2,2,2,2],
-    [0,0,0,0,0,0,0,0,0,3,2,2,2,2,2],
-    [0,0,0,0,0,0,0,0,3,2,2,2,2,2,2],
-    [0,0,0,0,0,0,0,0,2,2,2,2,2,2,1],
-    [0,0,0,0,0,0,3,3,2,1,1,1,1,1,1],
-    [3,3,3,3,3,3,2,2,1,1,1,1,1,1,1]];
+window.lvl1 = new createLevel(40,40);
 let existingBlocks = []
 
 // Initialize register
@@ -99,7 +137,8 @@ let register = new REGISTER();
 // World Rendering
 const world = {
     renderWorld: async function (fn) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "rgb(50,80,255)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         existingBlocks = [];
         let currentBlock = 0;
 
@@ -114,51 +153,92 @@ const world = {
             }
         }
         window.existingBlocks = existingBlocks;
+        ctx.save();
+
+        // Translate to the position where you want to draw the image
+        ctx.translate(
+            player.x + (window.innerWidth / 2) - camera.x + player.w / 2,
+            player.y + (window.innerHeight / 2) - camera.y + player.h / 2
+        );
+        
+        // Scale the canvas horizontally by -1 to flip the image
+        ctx.scale(player.mirrorY, player.mirrorX);
+        
+        // Draw the image with adjustments for the new origin and scaling
         ctx.drawImage(
             player.images[0],
             player.frames.current * player.frames.width,
             0,
             player.frames.width,
             player.frames.height,
-            player.x + (window.innerWidth / 2) - camera.x,
-            player.y + (window.innerHeight / 2) - camera.y,
+            -player.w / 2,
+            -player.h / 2,
             player.w,
             player.h
         );
+        
+        // Restore the canvas state
+        ctx.restore();
 
         // Debugging: Log after rendering everything
         
         requestAnimationFrame(fn);
     }
 };
-
 // Main Draw Loop
 async function draw() {
+    player.checkCollision();
     camera.x = player.x;
     camera.y = player.y;
-    if(!player.colliding){
+
+    // Gravity and friction
+    if (!player.collisions.direction.down) {
         player.velY -= 0.1;
-    }else{
+        player.velX += -player.velX / 20;
+    } else {
         player.velY = 0;
-        player.y++;
-        player.velX += -player.velX/20
+        player.velX += -player.velX / 20;
     }
-    if(Key["d"]){
-        player.velX-=0.1;
+
+    // Vertical collision handling
+    if (player.collisions.direction.up) {
+        player.velY = 0;
+        player.y -= 1; // Adjust position to prevent sticking to the ceiling
     }
-    if(Key["a"]){
-        player.velX+=0.1;
+    if (player.collisions.direction.down) {
+        player.velY = 0;
+        player.y += 1; // Adjust position to prevent sinking into the ground
     }
-    if(Key[" "]&&player.colliding){
-        player.velY=5;
+
+        // Player movement input
+        if (Key["d"] && !player.collisions.direction.right) {
+            player.velX -= 0.5;
+            player.mirrorY = -1;
+        }
+        if (Key["a"] && !player.collisions.direction.left) {
+            player.velX += 0.5;
+            player.mirrorY = 1;
+        }
+        if (Key[" "] && player.collisions.direction.down) {
+            player.velY = 5;
+        }
+
+    // Horizontal collision handling
+    if (player.collisions.direction.left) {
+        player.velX = 0;
+        player.x += 1; // Adjust position to prevent sticking to the wall
     }
-    player.init(); // Update player after camera adjustment
-    player.checkCollision();
+    if (player.collisions.direction.right) {
+        player.velX = 0;
+        player.x -= 1; // Adjust position to prevent sticking to the wall
+    }
+
     await world.renderWorld(draw);
+    player.init();
 }
 
-requestAnimationFrame(draw); // Initial call
 
+requestAnimationFrame(draw); // Initial call
 window.canvas = canvas;
 window.ctx = ctx;
 window.player = player;
