@@ -44,7 +44,13 @@ class Block {
         const width = this.parentModel?.bl1?.width || 16;
         const height = this.parentModel?.bl1?.height || 16;
 
+        const realPosition = {
+            x: x * 50,
+            y: y * 50
+        };
+
         ctx.drawImage(this.image, x * 50 + cam.x + (window.innerWidth / 2), y * 50 + cam.y + (window.innerHeight / 2), width, height);
+        return realPosition;
     }
 }
 

@@ -41,9 +41,8 @@ let player = {
     w: 50,
     h: 50,
     x: 0,
-    y: 0,
-    collidingX: false,
-    collidingY: false,
+    y: 50,
+    colliding: false,
     images: [new Image()],
     frames: {
         width: playerData.width,
@@ -63,6 +62,16 @@ let player = {
             updateAnimationFrame(this);
             this.frames.timer = 0;
         }
+    },
+    checkCollision: function() {
+        this.colliding = existingBlocks.some(block => {
+            return (
+                block[1] < (-player.y) + 50 && // Top of block above player's bottom
+                block[1] > (-player.y) &&       // Bottom of block below player's top
+                block[0] < (-player.x) + 50 && // Left of block left of player's right
+                block[0] + 50 > (-player.x)     // Right of block right of player's left
+            );
+        });
     }
 };
 
@@ -75,13 +84,14 @@ let camera = {
 };
 
 // Level data
-let lvl1 = [
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1]
-];
+window.lvl1 = [
+    [0,0,0,0,0,0,0,0,0,0,2,2,2,2,2],
+    [0,0,0,0,0,0,0,0,0,3,2,2,2,2,2],
+    [0,0,0,0,0,0,0,0,3,2,2,2,2,2,2],
+    [0,0,0,0,0,0,0,0,2,2,2,2,2,2,1],
+    [0,0,0,0,0,0,3,3,2,1,1,1,1,1,1],
+    [3,3,3,3,3,3,2,2,1,1,1,1,1,1,1]];
+let existingBlocks = []
 
 // Initialize register
 let register = new REGISTER();
@@ -90,16 +100,20 @@ let register = new REGISTER();
 const world = {
     renderWorld: async function (fn) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        
+        existingBlocks = [];
+        let currentBlock = 0;
+
         for (let y = 0; y < lvl1.length; y++) {
             for (let x = 0; x < lvl1[y].length; x++) {
                 if (lvl1[y][x] != 0) {
-                    await register.blocks[register.blockIds[lvl1[y][x]]].place(x, y, ctx, camera);
+                    currentBlock++
+                    let block = await register.blocks[register.blockIds[lvl1[y][x]]].place(x, y, ctx, camera);
+                    existingBlocks.push([block.x,block.y])
+                    //console.log(`block${currentBlock} `,[block.x,block.y]);
                 }
             }
         }
-        
+        window.existingBlocks = existingBlocks;
         ctx.drawImage(
             player.images[0],
             player.frames.current * player.frames.width,
@@ -122,8 +136,24 @@ const world = {
 async function draw() {
     camera.x = player.x;
     camera.y = player.y;
-    player.velY -= 0.001;
+    if(!player.colliding){
+        player.velY -= 0.1;
+    }else{
+        player.velY = 0;
+        player.y++;
+        player.velX += -player.velX/20
+    }
+    if(Key["d"]){
+        player.velX-=0.1;
+    }
+    if(Key["a"]){
+        player.velX+=0.1;
+    }
+    if(Key[" "]&&player.colliding){
+        player.velY=5;
+    }
     player.init(); // Update player after camera adjustment
+    player.checkCollision();
     await world.renderWorld(draw);
 }
 
