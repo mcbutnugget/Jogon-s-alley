@@ -1,0 +1,7 @@
+{
+    "image": "textures/entity/player.png",  
+    "width": 10,
+    "height": 10,
+    "frames": 2,
+    "fps": 2
+}
