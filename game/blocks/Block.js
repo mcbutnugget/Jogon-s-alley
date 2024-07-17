@@ -11,20 +11,20 @@ class Block {
 
     async loadModel() {
         try {
-            const modelUrl = `../../models/blocks/${this.settings.id}.json`;
+            const modelUrl = `../models/blocks/${this.settings.id}.json`;
             const modelResponse = await fetch(modelUrl);
             this.model = await modelResponse.json();
             console.log(`Loaded model for ${this.settings.id}`, this.model);
 
             if (this.model.parent) {
-                const parentModelUrl = `../../models/${this.model.parent}.json`;
+                const parentModelUrl = `../models/${this.model.parent}.json`;
                 const parentModelResponse = await fetch(parentModelUrl);
                 this.parentModel = await parentModelResponse.json();
                 console.log(`Loaded parent model for ${this.settings.id}`, this.parentModel);
             }
 
             // Preload image
-            this.image.src = `../../textures/${this.model.texture}.png`;
+            this.image.src = `../textures/${this.model.texture}.png`;
             await new Promise((resolve, reject) => {
                 this.image.onload = resolve;
                 this.image.onerror = reject;
