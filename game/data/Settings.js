@@ -9,7 +9,7 @@ class Settings{
             return this;
         };
         this.setId=(value)=>{
-            this.id = value;
+            this.id = value.replace(/([A-Z])/g,"_$1").toLowerCase();
             return this;
         };
         this.setResistance=(value = 2)=>{

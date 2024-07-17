@@ -35,7 +35,7 @@ class Block {
         }
     }
 
-    async place(x, y, ctx, cam) {
+    async place(blkX, blkY, ctx, cam) {
         // Wait for the model and parent model to be loaded
         if (!this.model || !this.image.complete) {
             await this.loadModel();
@@ -45,11 +45,11 @@ class Block {
         const height = this.parentModel?.bl1?.height || 50;
 
         const realPosition = {
-            x: x * 50,
-            y: y * 50
+            x: blkX * 50,
+            y: blkY * 50
         };
 
-        ctx.drawImage(this.image, x * 50 + cam.x + (window.innerWidth / 2), y * 50 + cam.y + (window.innerHeight / 2), width, height);
+        ctx.drawImage(this.image,Math.floor(blkX) * 50 + cam.x + (window.innerWidth / 2), Math.floor(blkY) * 50 + cam.y + (window.innerHeight / 2), width, height);
         return realPosition;
     }
 }
