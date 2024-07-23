@@ -1,6 +1,5 @@
 {
-    "width":50,
-    "height":25,
-    "x":0,
-    "y":0
+    "cubes":[
+        {"width":50,"height":25,"x":0,"y":0}
+    ]
 }

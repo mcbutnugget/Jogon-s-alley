@@ -19,7 +19,7 @@ class createLevel {
                 //deep stone generation
                 let bedrockRandom = this.noise.noise2D(x * 0.8, y * 0.8) * 3 + 3;
                 // 2D Noise for Caves (optional)
-                let caveNoise = this.noise.noise2D(x * (this.scale/10), (y) * (this.scale/10)); 
+                let caveNoise = this.noise.noise2D(x * (this.scale/10), y * (this.scale/10)); 
 
                 let blockType;
                  if(y < bedrockRandom){
