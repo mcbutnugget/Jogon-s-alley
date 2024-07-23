@@ -1,21 +1,21 @@
 
-#Jogon's alley
+# Jogon's alley
 
 try it out [here](https://mcbutnugget.github.io/Jogon-s-alley/ source https://github.com/mcbutnugget/Jogon-s-alley "here")
 
   
 
-###about
+### about
 
 ---
 
 Jogon's alley is a javascript-based game, it is currently in it's beta, so there is going to be big changes and features getting added
 
-###updates
+### updates
 
 ---
 
-####Beta 0.1
+#### Beta 0.1
 
 -  added a player controller
 
@@ -31,7 +31,7 @@ Jogon's alley is a javascript-based game, it is currently in it's beta, so there
 
   
 
-####beta 0.2
+#### beta 0.2
 
 -  added perlin noise generation for the levels
 
@@ -41,7 +41,7 @@ Jogon's alley is a javascript-based game, it is currently in it's beta, so there
 
 -  fixed bugs so that the project could be uploaded to github pages
 
-####beta 0.3
+#### beta 0.3
 
 -  updated collision, this fixed:
 	- camera jitters
