@@ -64,17 +64,14 @@ let player = {
         timer: 0,
     },
     colliding: false,
-    collidingWith: [null,null,null,null],
+    collidingWith: [null, null, null, null],
     collisionResolved: false,
-    collisionDirection:{
-        onGround: false,
-        hittingCeiling : false,
-        hittingWallLeft:false,
-        hittingWallRight:false
-    },
+    onGround: false,
+    wallL: false,
+    wallR:false,
+    hittingCeiling: false,
+    jumpAmmounts: 5,
     init: function () {
-        this.x += this.velX;
-        this.y += this.velY;
 
         // Animation Timer Update
         this.frames.timer++;
@@ -82,80 +79,97 @@ let player = {
             updateAnimationFrame(this);
             this.frames.timer = 0;
         }
-
-        this.checkCollision();
-        this.resolveCollision();
     },
     checkCollision: function () {
         this.colliding = existingBlocks.some(block => {
-            return (block[1] < (-player.y) + this.h &&
-                block[1] + block[3] > (-player.y) &&
-                block[0] < (-player.x) + this.w &&
-                block[0] + block[2] > (-player.x));
+            return (block[1] < (-this.y) + this.h &&
+                block[1] + block[3] > (-this.y) &&
+                block[0] < (-this.x) + this.w &&
+                block[0] + block[2] > (-this.x));
         });
         this.collidingWith = existingBlocks.find(block => {
-            if (block[1] < (-player.y) + this.h &&
-                block[1] + block[3] > (-player.y) &&
-                block[0] < (-player.x) + this.w &&
-                block[0] + block[2] > (-player.x)) {
+            if (block[1] < (-this.y) + this.h &&
+                block[1] + block[3] > (-this.y) &&
+                block[0] < (-this.x) + this.w &&
+                block[0] + block[2] > (-this.x)) {
                 return block;
             }
         });
-        if(this.collidingWith == undefined){
+        if (this.collidingWith == undefined) {
             this.collidingWith = [undefined, undefined, undefined, undefined]
         }
     },
     resolveCollision: function() {
-        let block = this.collidingWith;
-    
-        if (player.colliding) {
-            // Check for ground collision
-            if (player.velY < 0 && -(player.y) < block[1]) {
-                player.y = -(block[1] - player.h) - 1;
-                player.velY = 0;
-                player.collisionDirection.onGround = true;
-            } else {
-                player.collisionDirection.onGround = false;
-            }
-    
-            // Check for ceiling collision
-            if (player.velY > 0 && -(player.y) > block[1] - block[3]) {
-                if (!(player.velX > 0 && -(player.y) > block[1] - player.h) && 
-                    !(player.velX < 0 && -(player.y) > block[1] - player.h)) {
-                    player.y = -(block[1] + block[3]);
-                    player.velY = 0;
-                    player.collisionDirection.hittingCeiling = true;
-                } else {
-                    player.collisionDirection.hittingCeiling = false;
-                }
-            } else {
-                player.collisionDirection.hittingCeiling = false;
-            }
-    
-            // Check for wall collisions
-            if (player.velX > 0 && -(player.y) > block[1]) {
-                player.x = -(block[0] + block[2]);
-                player.velX = 0;
-                player.collisionDirection.hittingWallLeft = true;
-            } else {
-                player.collisionDirection.hittingWallLeft = false;
-            }
-    
-            if (player.velX < 0 && -(player.y) > block[1]) {
-                player.x = -(block[0] - player.w);
-                player.velX = 0;
-                player.collisionDirection.hittingWallRight = true;
-            } else {
-                player.collisionDirection.hittingWallRight = false;
-            }
-        } else {
-            player.collisionDirection.onGround = false;
-            player.collisionDirection.hittingCeiling = false;
-            player.collisionDirection.hittingWallLeft = false;
-            player.collisionDirection.hittingWallRight = false;
+        const block = this.collidingWith;
+
+        const blockBottom = block[1]+block[3];
+        const playerBottom = (-player.y) + player.h;
+        const playerRight = (-player.x) + player.w;
+        const blockRight = block[0]+block[2];
+
+        const BottomCollision = blockBottom - (-player.y);
+        const TopCollision = playerBottom - (block[1]);
+        const LeftCollision = playerRight - (block[0]);
+        const RightCollision = blockRight - (-player.x);
+
+        if (TopCollision < BottomCollision && TopCollision < LeftCollision && TopCollision < RightCollision) {
+            player.y = -(block[1] - player.h);
+            player.velY = 0;
+            player.onGround = true;
+        } else if (BottomCollision < TopCollision && BottomCollision < LeftCollision && BottomCollision < RightCollision) {
+            player.y = -(block[1] + block[3]);
+            player.velY = 0;
+            player.hittingCeiling = true;
+        } else if (LeftCollision < RightCollision && LeftCollision < TopCollision && LeftCollision < BottomCollision) {
+            player.x = -(block[0] - player.w);
+            player.velX = 0;
+            player.wallL = true;
+        } else if (RightCollision < LeftCollision && RightCollision < TopCollision && RightCollision < BottomCollision) {
+            player.x = -(block[0] + block[2]);
+            player.velX = 0;
+            player.wallR = true;
         }
+
+
+    },
+    controls:function(){
+        if (Key["d"] && player.onGround) { // Move right only if not hitting wall
+            player.velX -= 0.5;
+            player.mirrorY = -1;
+        }else if(Key["d"]){
+            player.velX -= 0.1;
+        }
+        if (Key["a"] && player.onGround) { // Move left only if not hitting wall
+            player.velX += 0.5;
+            player.mirrorY = 1;
+        }else if(Key["a"]){
+            player.velX += 0.1;
+        }
+        if (Key[" "] && (player.onGround||player.wallL||player.wallR)) {
+            player.velY = 10; // Jump from ground OR wall
+            if((player.wallL || player.wallR) && player.velY > -1 && player.jumpAmmounts > 0){
+                player.mirrorY = -player.mirrorY;
+                player.velX = player.mirrorY * 10;
+                player.jumpAmmounts--;
+            }
+        }
+        if(player.onGround){
+            player.velX += -player.velX / 20; // Friction
+            player.jumpAmmounts = 5;
+        }
+        player.onGround = false;
+        player.wallL = false;
+        player.wallR = false;
+        player.hittingCeiling = false;
+        player.checkCollision();
+        player.velY -= 0.5; // Gravity applied AFTER collision resolution
+        if(player.colliding){
+            player.resolveCollision();
+        }
+        this.x += this.velX;
+        this.y += this.velY;
     }
-    };
+};
 
 player.images[0].src = playerData.image;
 
@@ -165,7 +179,7 @@ let camera = {
     y: player.y
 };
 
-//cursor setup
+// Cursor setup
 const Cursor = new cursor(canvas);
 
 // Level data
@@ -192,7 +206,7 @@ const world = {
                     x >= Math.floor(((0) - camera.x - (window.innerWidth / 2)) / 50)
                 ) {
                     currentBlock++;
-                    let block = await register.blocks[String(register.blockIds[lvl1[y][x]]).replace(/_(.)/, (match, p1) => p1.toUpperCase())].place(x, y, ctx, camera);
+                    let block = await register.blocks[String(register.blockIds[lvl1[y][x]]).replace(/_(.)/gm, (match, p1) => p1.toUpperCase())].place(x, y, ctx, camera);
                     existingBlocks.push([block.x, block.y, block.w, block.h]);
                     //console.log(`block${currentBlock} `,[block.x,block.y]);
                 }
@@ -233,15 +247,16 @@ const world = {
     lastUpdateTime: 0,
     currentTime: 0
 };
+
 let cursorPosition;
 
 document.addEventListener("mousedown", (event) => {
-    console.log("player pos: ", (Math.floor(-player.x/50)*50), (Math.floor(-player.y/50)*50), "cursor pos:", cursorPosition[1]*50, cursorPosition[0]*50);
+    console.log("player pos: ", (Math.floor(-player.x / 50) * 50), (Math.floor(-player.y / 50) * 50), "cursor pos:", cursorPosition[1] * 50, cursorPosition[0] * 50);
     if (lvl1[cursorPosition[0]][cursorPosition[1]] != (0 | 4) && event.button == 0) {
         lvl1[cursorPosition[0]][cursorPosition[1]] = 0;
     } else if (lvl1[cursorPosition[0]][cursorPosition[1]] == 0 && event.button == 2 &&
-         !((Math.floor(-player.x/50)*50)==cursorPosition[1]*50 &&
-         (Math.floor(-player.y/50)*50)==cursorPosition[0]*50)) {
+        !((Math.floor(-player.x / 50) * 50) == cursorPosition[1] * 50 &&
+            (Math.floor(-player.y / 50) * 50) == cursorPosition[0] * 50)) {
         lvl1[cursorPosition[0]][cursorPosition[1]] = player.currentBlock;
     }
 });
@@ -259,7 +274,9 @@ document.addEventListener("keypress", (e) => {
 document.addEventListener("contextmenu", (event) => {
     event.preventDefault();
 });
-player.x = -(lvl1[0].length/2)*50;
+
+player.x = -(lvl1[0].length / 2) * 50;
+
 // Main Draw Loop
 async function draw(currentTime) {
     world.currentTime = currentTime;
@@ -271,28 +288,13 @@ async function draw(currentTime) {
 
     player.init(); // Update player
 
-
     ctx.fill();
     ctx.stroke();
     //ctx.fillText(JSON.stringify(player.collisions.direction), 16, 200, 2000);
 
     camera.x = player.x;
     camera.y = player.y;
-
-    if (Key["d"] && !player.collisionDirection.hittingWallRight) { // Move right only if not hitting wall
-        player.velX -= 0.5;
-        player.mirrorY = -1;
-    }
-    if (Key["a"] && !player.collisionDirection.hittingWallLeft) { // Move left only if not hitting wall
-        player.velX += 0.5;
-        player.mirrorY = 1;
-    }
-    if (Key[" "] && player.collisionDirection.onGround) {
-        player.velY = 10; // Jump from ground OR wall
-    }
-    player.velY -= 0.5; // Gravity applied AFTER collision resolution
-    player.velX += -player.velX / 20; // Friction
-    
+    player.controls();
 }
 
 requestAnimationFrame(draw); // Initial call
